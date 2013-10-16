@@ -12,7 +12,8 @@ module("integration/relationships/has_many - Has-Many Relationships", {
     User = DS.Model.extend({
       name: attr('string'),
       messages: hasMany('message', { polymorphic: true }),
-      contacts: hasMany()
+      contacts: hasMany(),
+      userSetings: hasMany('userSettings')
     });
 
     Contact = DS.Model.extend({
@@ -44,6 +45,11 @@ module("integration/relationships/has_many - Has-Many Relationships", {
       message: DS.belongsTo('post', { polymorphic: true })
     });
     Comment.toString = stringify('Comment');
+
+    UserSettings = DS.Model.extend({
+      user: belongsTo('user'),
+      locale: attr('string')
+    })
 
     env = setupStore({
       user: User,
@@ -193,6 +199,18 @@ test("Type can be inferred from the key of a hasMany relationship", function() {
     return user.get('contacts');
   })).then(async(function(contacts) {
     equal(contacts.get('length'), 1, "The contacts relationship is correctly set up");
+  }));
+});
+
+test("Type can be inferred from the key of a hasMany relationship with irregular pluralization", function() {
+  expect(1);
+  Ember.Inflector.inflector.irregular('userSettings','userSettings')
+  env.store.push('user', { id: 1, userSettings:[1] });
+  env.store.push('userSettings',{id:1,locale:'en-GB'})
+  env.store.find('user', 1).then(async(function(user) {
+    return user.get('userSettings');
+  })).then(async(function(settings) {
+    equal(settings.get('length'), 1, "The userSettings relationship is correctly set up");
   }));
 });
 
